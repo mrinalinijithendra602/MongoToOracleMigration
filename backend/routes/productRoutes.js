@@ -29,37 +29,38 @@ router.get('/', async (req, res) => {
     const limitNum = Math.min(100, Math.max(1, parseInt(limit)));
     const skip = (pageNum - 1) * limitNum;
 
-    if (q) {
-      const fullTextResults = await Product.find(
-        { $text: { $search: q } },
-        { score: { $meta: 'textScore' } }
-      )
-        .sort({ score: { $meta: 'textScore' } })
-        .lean();
+if (q) {
+  const regex = new RegExp(q, 'i');
 
-      const regex = new RegExp(q, 'i');
-      const partialResults = await Product.find({
-        $or: [
-          { 'item_name.value': { $regex: regex } },
-          { 'brand.value': { $regex: regex } },
-        ],
-      }).lean();
+  // Basic text search using wildcard index (no score)
+  const fullTextResults = await Product.find({ $text: { $search: q } }).lean();
 
-      const map = new Map();
-      fullTextResults.forEach(p => map.set(p._id.toString(), p));
-      partialResults.forEach(p => map.set(p._id.toString(), p));
+  // Regex fallback
+  const partialResults = await Product.find({
+    $or: [
+      { 'item_name.value': { $regex: regex } },
+      { 'brand.value': { $regex: regex } },
+    ],
+  }).lean();
 
-      const combined = Array.from(map.values());
-      combined.sort((a, b) => (b.score || 0) - (a.score || 0));
-      const paged = combined.slice(skip, skip + limitNum);
+  // Merge deduplicated results
+  const map = new Map();
+  fullTextResults.forEach(p => map.set(p._id.toString(), p));
+  partialResults.forEach(p => map.set(p._id.toString(), p));
 
-      return res.json({
-        products: paged.map(formatProduct),
-        page: pageNum,
-        totalPages: Math.ceil(combined.length / limitNum),
-        totalCount: combined.length,
-      });
-    } else {
+  const combined = Array.from(map.values());
+
+  // Apply pagination
+  const paged = combined.slice(skip, skip + limitNum);
+
+  return res.json({
+    products: paged.map(formatProduct),
+    page: pageNum,
+    totalPages: Math.ceil(combined.length / limitNum),
+    totalCount: combined.length,
+  });
+}
+ else {
       const totalCount = await Product.countDocuments();
       const products = await Product.find().skip(skip).limit(limitNum).lean();
 

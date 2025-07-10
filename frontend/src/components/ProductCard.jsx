@@ -58,7 +58,7 @@ export default function ProductCard({ product, onAddToCart }) {
           style={{
             padding: '10px 12px',
             cursor: adding ? 'not-allowed' : 'pointer',
-            backgroundColor: '#2ecc71',
+            backgroundColor: '#2e63cc',
             border: 'none',
             borderRadius: 4,
             color: 'white',

@@ -325,10 +325,10 @@ export default function App() {
               }).then(() => setUser(null));
             }}
             style={{
-              backgroundColor: '#e74c3c',
+              backgroundColor: '#a3a3a3',
               color: 'white',
               border: 'none',
-              padding: '6px 12px',
+              padding: '10px 12px',
               borderRadius: 4,
               cursor: 'pointer',
             }}
